@@ -16,65 +16,54 @@ import utils.SearchStrategy;
 public class RandomSearch implements SearchStrategy {
 
     private String fileName;
+    private InfoReader infoReader;
+    private List<String> solutionsSoFar;
 
     public RandomSearch(String fileName) {
         this.fileName = fileName;
+        this.infoReader = InfoReader.readInfo(fileName);
+        this.solutionsSoFar = new ArrayList<>();
     }
 
     public static void main(String[] args) {
-        String fileName = "rucsac-20.txt";
-        SearchStrategy nextAscentStrategy = new RandomHillClimbing(fileName, ClimbingType.NextAscent);
-        SearchStrategy randomClimbingStrategy = new RandomHillClimbing(fileName, ClimbingType.RandomHillClimbing);
-        SearchStrategy steepestAscentClimbing = new RandomHillClimbing(fileName, ClimbingType.SteepestAscent);
-
-        ExcelUtils excelUtils = new ExcelUtils("NewExcel.xls", 100,  new RandomSearch(fileName));
-        excelUtils.writeExcel();
-
+        String fileName = new String("rucsac-200.txt");
+        RandomSearch randomSearch = new RandomSearch(fileName);
+        System.out.println("Solution     " + " Value " + " Weight ");
+        for (int i = 0; i < 5; i++) {
+            Bag b = randomSearch.randomSearchBag();
+            System.out.println(b.getBitsString() + " " + b.getValue() +" " + b.getQuantity());
+        }
     }
 
 
     private Bag randomSearchBag() {
-        InfoReader infoReader = InfoReader.readInfo(this.fileName);
-
-        Bag bag = new Bag();
-        bag.setMaxWeight(infoReader.getMaxWeight());
-
+        Bag bag = new Bag(infoReader.getMaxWeight());
         List<Integer> itemsIndex = new ArrayList<>();
         for (int i = 0; i < infoReader.getNrObjects(); i++) {
             itemsIndex.add(i);
         }
-
         Random random = new Random();
         while (true) {
-            //System.out.println(itemsIndex.size());
             int index = itemsIndex.get(random.nextInt(itemsIndex.size()));
             bag.getItems().add(infoReader.getBagItemList().get(index));
-            //System.out.println("Adding item: " + index + " with value: " + infoReader.getBagItemList().get(index).getValue() + " for a total value: " + bag.getValue() + " and a total quantity of " + bag.getQuantity());
             if (bag.checkOverFull()) {
                 bag.getItems().remove(infoReader.getBagItemList().get(index));
-                //System.out.println("Removing item: " + index + " with value: " + infoReader.getBagItemList().get(index).getValue() + " for a total value: " + bag.getValue() + " and a total quantity of " + bag.getQuantity());
                 break;
             }
             itemsIndex.remove((Integer) index);
         }
-
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            if (bag.getItems().contains(infoReader.getBagItemList().get(i))) {
-                bag.getItemsBits().add(1);
-            } else {
-                bag.getItemsBits().add(0);
-            }
-        }
-
-        System.out.println("=========Result=========");
-        System.out.println("model.Bag quantity: " +bag.getQuantity());
-        System.out.println("Total value: " + bag.getValue());
-
+        bag.setItemsBits(infoReader.getNrObjects());
         return bag;
     }
 
     @Override
     public Bag findBestBag() {
         return randomSearchBag();
+    }
+
+
+    @Override
+    public InfoReader getInfoReader() {
+        return this.infoReader;
     }
 }

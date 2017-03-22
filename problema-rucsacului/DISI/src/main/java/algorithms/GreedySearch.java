@@ -2,6 +2,7 @@ package algorithms;
 
 import model.Bag;
 import model.BagItem;
+import utils.ExcelUtils;
 import utils.GreedyType;
 import utils.InfoReader;
 import utils.SearchStrategy;
@@ -16,53 +17,44 @@ public class GreedySearch implements SearchStrategy {
 
     private String fileName;
     private InfoReader infoReader;
-    private Bag bestBag;
     private GreedyType greedyType;
 
     public GreedySearch(String fileName, GreedyType greedyType) {
         this.fileName = fileName;
         this.infoReader = InfoReader.readInfo(fileName);
-        this.bestBag = new Bag();
-        bestBag.setMaxWeight(this.infoReader.getMaxWeight());
         this.greedyType = greedyType;
     }
 
     public static void main(String[] args) {
-        GreedySearch greedySearch = new GreedySearch("rucsac-200.txt", GreedyType.MaxValue);
+        GreedySearch greedySearch = new GreedySearch("rucsac-20.txt", GreedyType.MaxRatioValueQuantity);
+        Bag bag = greedySearch.minQuantityItems();
+        System.out.println(bag.getValue());
 
-        System.out.println("Greedy max. value: ");
-        greedySearch.maxValueItems();
-        System.out.println("\n");
-        
-        System.out.println("Greedy min. quantity: ");
-        greedySearch.minQuantityItems();
-        System.out.println("\n");
-        
-        System.out.println("Greedy max. value/quantity: ");
-        greedySearch.maxValueQuantityRatio();
-        System.out.println("\n");
     }
 
     public Bag maxValueItems() {
-
         List<BagItem> itemList = infoReader.getBagItemList();
         Collections.sort(itemList, BagItem.compareByValue());
-        bestBag = calcBestBag(itemList);
-        return bestBag;
+    /*    for (BagItem item: itemList
+             ) {
+            System.out.println(item.getId() + " " + item.getQuantity() + " " + item.getValue());
+        }*/
+        return calcBestBag(itemList);
     }
 
     public Bag minQuantityItems() {
         List<BagItem> itemList = infoReader.getBagItemList();
         Collections.sort(itemList, BagItem.compareByQuantity());
-        bestBag = calcBestBag(itemList);
-        return bestBag;
+
+
+
+        return calcBestBag(itemList);
     }
 
     public Bag maxValueQuantityRatio() {
         List<BagItem> itemList = infoReader.getBagItemList();
         Collections.sort(itemList, BagItem.compareByRatio());
-        bestBag = calcBestBag(itemList);
-        return bestBag;
+        return calcBestBag(itemList);
     }
 
     private Bag calcBestBag(List<BagItem> bagItems) {
@@ -82,6 +74,11 @@ public class GreedySearch implements SearchStrategy {
                 }
             }
         }
+        for (BagItem bi: bag.getItems()
+                ) {
+            System.out.println(bi.getId() + " " + bi.getQuantity() + " " + bi.getValue());
+        }
+        bag.setItemsBits(infoReader.getNrObjects());
         return bag;
     }
 
@@ -89,12 +86,25 @@ public class GreedySearch implements SearchStrategy {
     @Override
     public Bag findBestBag() {
         switch (greedyType) {
-            case MaxRationValueQuantity:
+            case MaxRatioValueQuantity:
                 return maxValueQuantityRatio();
             case MaxValue:
                 return maxValueItems();
             default:
                 return minQuantityItems();
         }
+    }
+
+    @Override
+    public InfoReader getInfoReader() {
+        return this.infoReader;
+    }
+
+    public GreedyType getGreedyType() {
+        return greedyType;
+    }
+
+    public void setGreedyType(GreedyType greedyType) {
+        this.greedyType = greedyType;
     }
 }

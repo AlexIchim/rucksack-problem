@@ -12,7 +12,6 @@ import java.util.*;
  */
 public class BranchAndBoundSearch implements SearchStrategy {
 
-    private int maxValue;
     private String fileName;
     private InfoReader infoReader;
     private Bag bestBag;
@@ -20,10 +19,10 @@ public class BranchAndBoundSearch implements SearchStrategy {
     public static int count;
 
     public static void main(String[] args) {
-        BranchAndBoundSearch branchAndBoundSolver = new BranchAndBoundSearch("rucsac-100.txt");
+        BranchAndBoundSearch branchAndBoundSolver = new BranchAndBoundSearch("rucsac-200.txt");
 
         long now = System.nanoTime();
-        Bag bag = branchAndBoundSolver.solve();
+        Bag bag = branchAndBoundSolver.findBestBag();
         System.out.println(System.nanoTime()-now);
 
         System.out.println(bag.getValue());
@@ -48,13 +47,8 @@ public class BranchAndBoundSearch implements SearchStrategy {
         });
     }
 
-    @Override
-    public Bag findBestBag() {
-        return solve();
-    }
-
     private class Node implements Comparable<Node> {
-        public int h;
+        public int height;
         List<BagItem> taken;
         public double bound;
         public double value;
@@ -65,7 +59,7 @@ public class BranchAndBoundSearch implements SearchStrategy {
         }
 
         public Node(Node parent) {
-            h = parent.h + 1;
+            height = parent.height + 1;
             taken = new ArrayList<BagItem>(parent.taken);
             bound = parent.bound;
             value = parent.value;
@@ -78,7 +72,7 @@ public class BranchAndBoundSearch implements SearchStrategy {
         }
 
         public void computeBound() {
-            int i = h;
+            int i = height;
             double w = weight;
             bound = value;
             BagItem bagItem;
@@ -90,13 +84,12 @@ public class BranchAndBoundSearch implements SearchStrategy {
                 bound += bagItem.getValue();
                 i++;
             } while (i < bagItems.size());
-            //System.out.println(bound);
-
             bound += (infoReader.getMaxWeight() - w) * (bagItem.getRatio());
         }
     }
 
-    public Bag solve () {
+    @Override
+    public Bag findBestBag () {
         Collections.sort(this.bagItems, BagItem.compareByRatioDescending());
 
         Node best = new Node();
@@ -108,14 +101,14 @@ public class BranchAndBoundSearch implements SearchStrategy {
 
         while (!priorityQueue.isEmpty()) {
             Node node = priorityQueue.poll();
-            if (node.bound > best.value && node.h < this.bagItems.size() - 1) {
+            if (node.bound > best.value && node.height < this.bagItems.size() - 1) {
 
                 Node with = new Node(node);
-                BagItem item = bagItems.get(node.h);
+                BagItem item = bagItems.get(node.height);
                 with.weight += item.getQuantity();
 
                 if (with.weight <= infoReader.getMaxWeight()) {
-                    with.taken.add(bagItems.get(node.h));
+                    with.taken.add(bagItems.get(node.height));
                     with.value += item.getValue();
                     with.computeBound();
 
@@ -132,7 +125,6 @@ public class BranchAndBoundSearch implements SearchStrategy {
                 without.computeBound();
                 if (without.bound > best.value) {
                     //System.out.println(without.bound);
-                    count++;
                     priorityQueue.offer(without);
                 }
             }
@@ -141,6 +133,12 @@ public class BranchAndBoundSearch implements SearchStrategy {
         Bag bag = new Bag();
         bag.setMaxWeight(infoReader.getMaxWeight());
         bag.setItems(best.taken);
+        bag.setItemsBits(infoReader.getNrObjects());
         return bag;
+    }
+
+    @Override
+    public InfoReader getInfoReader() {
+        return this.infoReader;
     }
 }

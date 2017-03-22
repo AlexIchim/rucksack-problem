@@ -13,11 +13,21 @@ public class BagItem {
     public BagItem() {
     }
 
+
     public static Comparator<BagItem> compareByQuantity() {
         return new Comparator<BagItem>() {
             @Override
             public int compare(BagItem o1, BagItem o2) {
-                return Integer.compare(o1.getQuantity(), o2.getQuantity());
+                if (Integer.compare(o2.getQuantity(), o1.getQuantity()) == 0) {
+                    if (Integer.compare(o1.getValue(), o2.getValue()) == 0) {
+                        return Integer.compare(o1.getId(), o2.getId());
+                    } else {
+                        return Integer.compare(o1.getValue(), o2.getValue());
+                    }
+                } else {
+                    return Integer.compare(o2.getQuantity(), o1.getQuantity());
+                }
+
             }
         };
     }
@@ -26,7 +36,15 @@ public class BagItem {
         return new Comparator<BagItem>() {
             @Override
             public int compare(BagItem o1, BagItem o2) {
-                return Integer.compare(o1.getValue(), o2.getValue());
+                 if (Integer.compare(o1.getValue(), o2.getValue()) == 0) {
+                     if (Integer.compare(o2.getQuantity(), o1.getQuantity()) == 0) {
+                         return Integer.compare(o1.getId(), o2.getId());
+                     } else  {
+                         return Integer.compare(o2.getQuantity(), o1.getQuantity());
+                     }
+                 } else {
+                     return Integer.compare(o1.getValue(), o2.getValue());
+                 }
             }
         };
     }

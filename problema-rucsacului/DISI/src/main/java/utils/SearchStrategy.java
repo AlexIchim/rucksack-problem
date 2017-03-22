@@ -7,4 +7,5 @@ import model.Bag;
  */
 public interface SearchStrategy {
     Bag findBestBag();
+    InfoReader getInfoReader();
 }

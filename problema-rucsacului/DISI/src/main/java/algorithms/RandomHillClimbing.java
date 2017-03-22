@@ -2,11 +2,15 @@ package algorithms;
 
 import model.Bag;
 import model.BagItem;
+import utils.BestNeighbourType;
 import utils.ClimbingType;
 import utils.InfoReader;
 import utils.SearchStrategy;
 
+import javax.sound.midi.MidiDevice;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -15,18 +19,30 @@ import java.util.Random;
  */
 public class RandomHillClimbing implements SearchStrategy {
 
-    private int maxValue;
     private String fileName;
     private InfoReader infoReader;
     private Bag bestBag;
-    private ClimbingType climbingType; /* Type 1 = Random Hill utils.ClimbingType, Type 2 = Steepest Ascent Hill utils.ClimbingType, Type 3 = Next Ascent Hill utils.ClimbingType */
-    private List<List<Integer>> solutions;
+    private List<List<String>> solutions;
+    private int nrResets;
+    private BestNeighbourType bestNeighbourType;
+    private List<BagItem> bagItems;
 
-    public List<List<Integer>> getSolutions() {
+
+    public RandomHillClimbing(String fileName, int resetCount, BestNeighbourType bestNeighbourType) {
+        this.fileName = fileName;
+        this.infoReader = InfoReader.readInfo(fileName);
+        this.bestBag = new Bag();
+        this.bagItems = infoReader.getBagItemList();
+        this.solutions = new ArrayList<List<String>>();
+        this.nrResets = resetCount;
+        this.bestNeighbourType = bestNeighbourType;
+    }
+
+    public List<List<String>> getSolutions() {
         return solutions;
     }
 
-    public void setSolutions(List<List<Integer>> solutions) {
+    public void setSolutions(List<List<String>> solutions) {
         this.solutions = solutions;
     }
 
@@ -54,179 +70,156 @@ public class RandomHillClimbing implements SearchStrategy {
         this.bagItems = bagItems;
     }
 
-    private List<BagItem> bagItems;
 
-    public RandomHillClimbing(String fileName, ClimbingType climbingType) {
-        this.climbingType = climbingType;
-        this.fileName = fileName;
-        this.infoReader = InfoReader.readInfo(fileName);
-        this.bestBag = new Bag();
-        this.bagItems = infoReader.getBagItemList();
-        this.solutions = new ArrayList<List<Integer>>();
-    }
+
 
     public static void main(String[] args) {
-        RandomHillClimbing randomHillClimbing = new RandomHillClimbing("rucsac-200.txt", ClimbingType.RandomHillClimbing);
+       String fileName = "rucsac-200.txt";
+    /*
+        RandomHillClimbing randomHillClimbing = new RandomHillClimbing(fileName, 5000, BestNeighbourType.MaxValueRation);
 
-        for (int i = 0; i <= 10000; i++) {
-
-            Bag bag = randomHillClimbing.steepestAscentHillClimbing();
-            if (bag.getValue() > randomHillClimbing.getBestBag().getValue()) {
-                randomHillClimbing.setBestBag(bag);
-            }
-        }
-
-        System.out.println("Max value:");
-        System.out.println(randomHillClimbing.getBestBag().getValue());
-    }
-
-    public Bag randomHillClimbing() {
-        Bag bag = generateRandomBag();
-        List<Integer> bits = new ArrayList<>();
-        solutions.clear();
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            if (bag.getItems().contains(infoReader.getBagItemList().get(i))) {
-                bits.add(1);
-            } else {
-                bits.add(0);
-            }
-        }
-
-       /* for (Integer e:
-             bits) {
-            System.out.print(e);
-        }
-        System.out.println();*/
-        solutions.add(bits);
-        boolean check = true;
-        int k = 0;
-        while (check) {
-            check = false;
-            for (int i = 0; i < bagItems.size(); i++) {
-                if (bits.get(i) != 1 && (bag.getQuantity() + bagItems.get(i).getQuantity()) <= bag.getMaxWeight()) {
-                    bits.set(i, 1);
-                   /* for (Integer e:
-                            bits) {
-                        System.out.print(e);
-                    }
-                    System.out.println();*/
-                    bag.getItems().add(bagItems.get(i));
-                    solutions.add(bits);
-                    check = true;
-                    break;
-                }
-            }
-        }
-        return bag;
-    }
-
-    public Bag steepestAscentHillClimbing() {
         Bag bag = new Bag();
-        bag.setMaxWeight(infoReader.getMaxWeight());
-        solutions.clear();
+        bag = randomHillClimbing.randomHillClimbingAlg();
+        List<List<String>> lists = randomHillClimbing.getSolutions();
+        System.out.println(bag.getValue());*/
 
+    }
 
-        List<Integer> itemsIndex = new ArrayList<>();
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            itemsIndex.add(i);
-        }
+    public Bag randomHillClimbingAlg() {
+        int t = 0, bestValueSoFar = 0;
+        boolean local;
+        Bag bestBag = new Bag();
 
-        Random random = new Random();
-        while (true) {
-            int index = itemsIndex.get(random.nextInt(itemsIndex.size()));
-            bag.getItems().add(infoReader.getBagItemList().get(index));
-            if (bag.checkOverFull()) {
-                bag.getItems().remove(infoReader.getBagItemList().get(index));
-                break;
+        do {
+            local = false;
+            /* Reset from random point */
+            Bag newGeneratedBag = generateRandomBag(infoReader.getNrObjects(), bagItems, infoReader.getMaxWeight());
+            if (t == 0)
+                bestBag = newGeneratedBag;
+
+            //Check if solutions already checked
+            if (compareLists(solutions, newGeneratedBag.getBitsString())) {
+                continue;
             }
-            itemsIndex.remove((Integer) index);
-        }
 
-        List<Integer> bits = new ArrayList<>();
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            if (bag.getItems().contains(infoReader.getBagItemList().get(i))) {
-                bits.add(1);
-            } else {
-                bits.add(0);
-            }
-        }
+            ArrayList<String> climbSteps = new ArrayList<>();
+            climbSteps.add(newGeneratedBag.getBitsString());
 
-        solutions.add(bits);
-        boolean check = true;
-        int k = 0, bestItem = -1, bestValue = -1;
-        while (check) {
-            check = false;
-            bestItem = -1;
-            bestValue = -1;
-            for (int i = 0; i < bagItems.size(); i++) {
-                if (bits.get(i) != 1 && (bag.getQuantity() + bagItems.get(i).getQuantity()) <= bag.getMaxWeight()) {
-                    if (bag.getValue() + bagItems.get(i).getValue() > bestValue) {
-                        bestValue = bag.getValue() + bagItems.get(i).getValue();
-                        bestItem = i;
+            //Climb while not local optimum
+            do {
+
+                //Check all neighbors of a solution and find best neigbor improvement
+                int bestIndex = getBestNeighbor(newGeneratedBag, bestNeighbourType);
+                //found local optimum (no better neighbors)
+                if (bestIndex == -1) {
+                    local = true;
+                }
+                else {
+                    newGeneratedBag.getItems().add(bagItems.get(bestIndex));
+                    newGeneratedBag.setItemsBits(bagItems.size());
+                    climbSteps.add(newGeneratedBag.getBitsString());
+                    if (newGeneratedBag.getValue() > bestBag.getValue()) {
+                        bestBag = newGeneratedBag;
                     }
-                    check = true;
                 }
+            } while (!local);
+
+            if (bestBag.getValue() > bestValueSoFar) {
+                bestValueSoFar = bestBag.getValue();
+                solutions.clear();
+                solutions.add(climbSteps);
+            } else if (newGeneratedBag.getValue() == bestValueSoFar) { //Check for multiple solutions
+                solutions.add(climbSteps);
             }
-            if (bestItem != -1) {
-                bits.set(bestItem, 1);
-                bag.getItems().add(bagItems.get(bestItem));
-                solutions.add(bits);
-            }
-        }
-        return bag;
+            t++;
+        } while ( t < nrResets);
+        return bestBag;
     }
 
-    public Bag nextAscentHilLClimbing() {
-        Bag bag = new Bag();
-        bag.setMaxWeight(infoReader.getMaxWeight());
+    private int getBestNeighbor(Bag newBag, BestNeighbourType bestNeighbourType) {
 
+        int newGeneratedBagValue    = newBag.getValue();
+        int newGeneratedBagQuantity   = newBag.getQuantity();
+        int bestIndex = -1;
+        int bestValue = newGeneratedBagValue;
+        int filterSoFar = 0;
+        double filterRatio = 0;
+        int filterQuantity = Integer.MAX_VALUE;
+        for (int i = 0; i < bagItems.size(); i++) {
+            if (newBag.getBitsString().charAt(i) == '0' &&
+                newGeneratedBagQuantity + bagItems.get(i).getQuantity() <= infoReader.getMaxWeight())   {
+                    switch (bestNeighbourType) {
+                        case MaxValue:
+                            if (bagItems.get(i).getValue() > filterSoFar) {
+                                bestIndex = i;
+                                filterSoFar = bagItems.get(i).getValue();
+                            }
+                            break;
+                        case MaxValueRation:
+                            if (bagItems.get(i).getRatio() > filterRatio) {
+                                bestIndex = i;
+                                filterRatio = bagItems.get(i).getRatio();
+                            }
+                            break;
+                        case MinQuantity:
+                            if (bagItems.get(i).getQuantity() < filterQuantity) {
+                                bestIndex = i;
+                                filterQuantity = bagItems.get(i).getQuantity();
+                            }
+                            break;
+                    }
 
-        List<Integer> itemsIndex = new ArrayList<>();
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            itemsIndex.add(i);
+            }
         }
+        return bestIndex;
+    }
 
+
+    /* Generate a random string of 1 and 0 of length nr of objects. */
+    public static String generateRandomBitsString(int length) {
+        StringBuilder sb = new StringBuilder();
         Random random = new Random();
-        while (true) {
-            int index = itemsIndex.get(random.nextInt(itemsIndex.size()));
-            bag.getItems().add(infoReader.getBagItemList().get(index));
-            if (bag.checkOverFull()) {
-                bag.getItems().remove(infoReader.getBagItemList().get(index));
-                break;
-            }
-            itemsIndex.remove((Integer) index);
+        for (int i = 0; i < length; i++) {
+            sb.append(random.nextInt(2));
         }
+        return sb.toString();
+    }
 
-        List<Integer> bits = new ArrayList<>();
-        for (int i = 0; i < infoReader.getNrObjects(); i++) {
-            if (bag.getItems().contains(infoReader.getBagItemList().get(i))) {
-                bits.add(1);
-            } else {
-                bits.add(0);
-            }
-        }
-
-
-        boolean check = true;
-        int k = 0;
-        while (check) {
-            check = false;
-            for (int i = k; i < bagItems.size(); i++) {
-                if (bits.get(i) != 1 && (bag.getQuantity() + bagItems.get(i).getQuantity()) <= bag.getMaxWeight()) {
-                    bits.set(i, 1);
-                    bag.getItems().add(bagItems.get(i));
-                    check = true;
-                    k=i;
-                    break;
+    /* Check if generated string is valid */
+    public static boolean checkValidSolution(List<BagItem> items, int maxWeight, String solution) {
+        int totalWeight = 0;
+        for (int i = 0; i < solution.length(); i++) {
+            if (solution.charAt(items.get(i).getId() - 1) == '1' ) {
+                totalWeight += items.get(i).getQuantity();
+                if (totalWeight > maxWeight) {
+                    return false;
                 }
             }
         }
+        return true;
+    }
 
+    /* Generate a valid random bag */
+    public  Bag generateRandomBag(int nrItems, List<BagItem> bagItems, int maxWeight) {
+        Bag bag = new Bag();
+        boolean valid = false;
+        while (!valid) {
+            String solution = generateRandomBitsString(nrItems);
+            if (checkValidSolution(bagItems, maxWeight, solution)) {
+                for (int i = 0; i < solution.length(); i++) {
+                    if (solution.charAt(i) == '1') {
+                        bag.getItems().add(bagItems.get(i));
+                    }
+                }
+                valid = true;
+            }
+        }
+        bag.setItemsBits(infoReader.getNrObjects());
         return bag;
     }
 
 
-    public Bag generateRandomBag() {
+    public Bag generateRandomBagUntilFull() {
         Bag bag = new Bag();
         bag.setMaxWeight(infoReader.getMaxWeight());
         List<Integer> itemsIndex = new ArrayList<>();
@@ -247,17 +240,27 @@ public class RandomHillClimbing implements SearchStrategy {
             }
             itemsIndex.remove((Integer) index);
         }
+        bag.setItemsBits(infoReader.getNrObjects());
         return bag;
     }
 
     @Override
     public Bag findBestBag() {
-        if (climbingType == ClimbingType.RandomHillClimbing) {
-            return randomHillClimbing();
-        } else if (climbingType == ClimbingType.SteepestAscent) {
-            return steepestAscentHillClimbing();
-        } else {
-            return nextAscentHilLClimbing();
-        }
+        return  randomHillClimbingAlg();
     }
+
+
+    private boolean compareLists(List<List<String>> list1, String solution) {
+        boolean equals = false;
+        int i =0;
+        for (List<String> list: list1
+             ) {
+            if (list.get(0).equals(solution)) {
+                equals = true;
+            }
+        }
+        return equals;
+    }
+
+
 }

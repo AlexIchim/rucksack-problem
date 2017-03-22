@@ -23,6 +23,11 @@ public class Bag {
         itemsBits = new ArrayList<>();
     }
 
+    public Bag(int maxWeight) {
+        this();
+        this.maxWeight = maxWeight;
+    }
+
     public boolean checkOverFull() {
         int quantity = 0;
         for (BagItem bi: items
@@ -67,18 +72,22 @@ public class Bag {
         this.items = items;
     }
 
-    public List<Integer> getItemsBits() {
-        return itemsBits;
-    }
-
-    public void setItemsBits(int nrItems, List<BagItem> allItems) {
-        System.out.println("In set items");
-        for (int i = 0; i < nrItems; i++) {
+    public void setItemsBits(int nrItems) {
+        itemsBits.clear();
+       /* for (int i = 0; i < nrItems; i++) {
             if (items.contains((BagItem) allItems.get(i))) {
                 itemsBits.add(1);
             } else {
                 itemsBits.add(0);
             }
+        }*/
+        for (int i = 0; i < nrItems; i++) {
+            itemsBits.add(0);
+        }
+
+        for (BagItem bi: items
+             ) {
+            itemsBits.set(bi.getId()-1, 1);
         }
     }
 
@@ -98,6 +107,5 @@ public class Bag {
         }
         return stringBuilder.toString();
     }
-
 
 }

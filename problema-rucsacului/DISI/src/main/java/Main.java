@@ -11,105 +11,68 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        String fileName = "rucsac-200.txt";
+        String inputFileName = "rucsac-20.txt";
         long now; /* running time check */
         Bag bag = new Bag();
 
-        /**
+/*        *//**
          * Random Search
          */
-/*        SearchStrategy randomSearch = new RandomSearch(fileName);
-        ExcelUtils randomSearchReport = new ExcelUtils("Rucsac20 - 20000.xls", 20000, randomSearch);
-        randomSearchReport.writeExcel();*/
 
-        /**
+/*        int nrRuns = 5;
+        SearchStrategy randomSearch = new RandomSearch(inputFileName);
+        for (int i = 1; i <= nrRuns; i++) {
+            ExcelUtils randomSearchReport = new ExcelUtils("RandomSearch-Rucsac20 - 100-" + i + ".xls", 100, randomSearch);
+            randomSearchReport.writeExcel();
+        }*/
+
+/*
+        *//**
          * Greedy Search
          */
-/*
-        SearchStrategy greedySearchMaxValue     = new GreedySearch(fileName, GreedyType.MaxValue);
-        SearchStrategy greedySearchMinQuantity  = new GreedySearch(fileName, GreedyType.MinQuantity);
-        SearchStrategy greedySearchMaxRation    = new GreedySearch(fileName, GreedyType.MaxRationValueQuantity);
 
-        bag = greedySearchMaxValue.findBestBag();
-        System.out.println("Greedy max value: " + bag.getValue());
-        bag.setItemsBits(InfoReader.readInfo(fileName).getNrObjects(), InfoReader.readInfo(fileName).getBagItemList());
-        System.out.println(bag.getBitsString());
+/*        SearchStrategy greedySearchMaxValue     = new GreedySearch(inputFileName, GreedyType.MaxValue);
+        SearchStrategy greedySearchMinQuantity  = new GreedySearch(inputFileName, GreedyType.MinQuantity);
+        SearchStrategy greedySearchMaxRatio    = new GreedySearch(inputFileName, GreedyType.MaxRatioValueQuantity);
 
-
-        bag = greedySearchMaxRation.findBestBag();
-        System.out.println("Greedy max value/quantity ration: " + bag.getValue());
-        bag.setItemsBits(InfoReader.readInfo(fileName).getNrObjects(), InfoReader.readInfo(fileName).getBagItemList());
-        System.out.println(bag.getBitsString());
+        ExcelUtils excelUtils = new ExcelUtils("RucsacGreedyMaxValue200.xls", 1, greedySearchMaxValue);
+        ExcelUtils excelUtils1 = new ExcelUtils("RucsacGreedyMinQuantity200.xls", 1, greedySearchMinQuantity);
+        ExcelUtils excelUtils2 = new ExcelUtils("RucsacMaxRatio200.xls", 1, greedySearchMaxRatio);
+        excelUtils.writeExcelSingle();
+        excelUtils1.writeExcelSingle();
+        excelUtils2.writeExcelSingle();*/
 
 
-        bag = greedySearchMinQuantity.findBestBag();
-        System.out.println("Greedy min quantity: " + bag.getValue());
-        bag.setItemsBits(InfoReader.readInfo(fileName).getNrObjects(), InfoReader.readInfo(fileName).getBagItemList());
-        System.out.println(bag.getBitsString());
-*/
-
-
-        /**
+/*        *//**
          * Exhaustive Search - 2^n
          */
-  /*      now = System.currentTimeMillis();
-        SearchStrategy exhaustiveSearch = new ExhaustiveSearch(fileName);
-        bag = exhaustiveSearch.findBestBag();
-        System.out.println("Miliseconds run: " + (System.currentTimeMillis() - now));
-        System.out.println("Best bag : " + bag.getValue());*/
+/*
+        SearchStrategy exhaustiveSearch = new ExhaustiveSearch(inputFileName);
+        ExcelUtils excelUtils = new ExcelUtils("ExhaustiveSearch.xls", 1, exhaustiveSearch);
+        excelUtils.writeExcelSingle();
+*/
 
         /**
          * Branch and Bound -  < 2^n
          */
-
-        now = System.currentTimeMillis();
-        SearchStrategy branchAndBoundSearch = new BranchAndBoundSearch(fileName);
-        bag = branchAndBoundSearch.findBestBag();
-        System.out.println("Miliseconds run: " + (System.currentTimeMillis() - now));
-        System.out.println("Best bag : " + bag.getValue());
-        System.out.println(BranchAndBoundSearch.count);
-        int count = 0;
+/*
+        ExcelUtils excelUtils = new ExcelUtils("BranchAndBound20.xls", 1, new BranchAndBoundSearch(inputFileName));
+        excelUtils.writeExcelSingle();*/
 
 
         /**
          * Random Hill Climbing
          */
 
-
-
-      /*  System.out.println("Branch and bound: ");
-        BranchAndBoundSearch branchAndBoundSolver = new BranchAndBoundSearch(fileName);
-        long now = System.nanoTime();
-        Bag bag = branchAndBoundSolver.solve();
-        System.out.println("Solution: "  + bag.getValue());
-        System.out.println(System.nanoTime()-now);
-
-        System.out.println("Random search");
-        now = System.nanoTime();
-        ExhaustiveSearch exhaustiveSearch = new ExhaustiveSearch(fileName);
-        Bag bag1 = exhaustiveSearch.searchBestBag();
-        System.out.println("Solution: "  + bag1.getValue());
-
-        System.out.println(System.nanoTime() - now);*/
-
-       /* RandomHillClimbing randomClimbingStrategy = new RandomHillClimbing(fileName, ClimbingType.SteepestAscent);
-        int best = 0;
-        while(best < 134000) {
-            Bag bag3 = randomClimbingStrategy.seachBestBag();
-            best = bag3.getValue();
+        int nrResets = 5000;
+        ExcelUtils excelUtils = new ExcelUtils("Rucsac20SteepestHillClimb - 5000.xls", nrResets, new RandomHillClimbing(inputFileName, nrResets, BestNeighbourType.MaxValueRation));
+        excelUtils.writeExcelHillClimb();
+/*
+        for (int i = 1; i <= 10; i++) {
+             excelUtils = new ExcelUtils("Rucsac200SteepestHillClimb-MaxValueNeighbour - 1000 - "+ i  + ".xls", nrResets, new RandomHillClimbing(inputFileName, nrResets, BestNeighbourType.MaxValue));
+             excelUtils.writeExcelHillClimb();
         }
+*/
 
-        for (List<Integer> list:
-                randomClimbingStrategy.getSolutions()) {
-            for (Integer i:
-                 list) {
-                System.out.print(i);
-            }
-            System.out.println();
-            System.out.println();
-        }
-        randomClimbingStrategy.getSolutions().clear();
-        
-        System.out.println("RanddomHill best: " +best);*/
     }
 }
